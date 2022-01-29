@@ -7,7 +7,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-var ctx = context.Background()
+var Ctx = context.Background()
 
 // CreateRedisClient creates a new redis client and returns it
 func CreateRedisClient(dbNo int) *redis.Client {
