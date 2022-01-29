@@ -9,3 +9,10 @@
 ```shell
 docker-compose up -d
 ```
+
+### Test using cURL
+
+```shell
+curl --header "Content-Type: application/json" -d "{\"url\":\"https://
+en.wikipedia.org/wiki/URL_shortening\"}" http://localhost:3000/api/v1
+```
