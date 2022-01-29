@@ -35,3 +35,6 @@ go.work
 ### macOS ###
 # General
 .DS_Store
+
+# Docker volume
+/.data
