@@ -61,7 +61,7 @@ func ShortenURL(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 			"error":            "Rate limit exceeded",
-			"rate_limit_reset": (limit * time.Minute) / time.Nanosecond,
+			"rate_limit_reset": limit / time.Nanosecond / time.Minute,
 		})
 	}
 
@@ -126,11 +126,14 @@ func ShortenURL(c *fiber.Ctx) error {
 	// update XRateRemaining with the decreased rate limit remaining
 	resp.XRateRemaining, _ = strconv.Atoi(val)
 
-	// get the TTL
+	// get the TTL in milisecond
+	// 1s = 10^9 nanosecond
+	// 1min = 60s = 60 * 10^9 nanosecond
+	// for example, 30 mins = 30 * 60 * 10^9 nanosecond
 	ttl, _ := rc2.TTL(database.Ctx, c.IP()).Result()
 
 	// update XRateLimitReset with the current TTL
-	resp.XRateLimitReset = ttl * time.Minute / time.Nanosecond
+	resp.XRateLimitReset = ttl / time.Nanosecond / time.Minute
 
 	// set CustomShort
 	// example: bit.ly/2kkxjLk

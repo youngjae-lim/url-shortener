@@ -19,6 +19,8 @@ USER appuser
 
 COPY . /app
 
+WORKDIR /app
+
 COPY --from=builder /build/main /app/
 
 EXPOSE 3000
