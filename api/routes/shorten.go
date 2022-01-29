@@ -29,11 +29,11 @@ type response struct {
 	XRateLimitReset time.Duration `json:"rate_limit_reset"`
 }
 
-// ShortenURL shortens a user-enter
+// ShortenURL shortens a user-entered URL and and returns it as a response
 func ShortenURL(c *fiber.Ctx) error {
 	body := new(request)
 
-	// bind the request body to a struct
+	// bind the request body to a struct - parse JSON to struct
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot parse JSON"})
 	}
@@ -52,16 +52,18 @@ func ShortenURL(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "cannot connect to DB"})
 	}
 
-	// val, _ = rc2.Get(database.Ctx, c.IP()).Result()
+	// convert string val to integer
 	valInt, _ := strconv.Atoi(val)
 
+	// if the remaining api qouta is less than or equal to 0,
+	// get the remaining time to live and return with an error msg
 	if valInt <= 0 {
 		// get the remaining time to live of the key
-		limit, _ := rc2.TTL(database.Ctx, c.IP()).Result()
+		limit, _ := rc2.TTL(database.Ctx, c.IP()).Result() // in milisecond
 
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 			"error":            "Rate limit exceeded",
-			"rate_limit_reset": limit / time.Nanosecond / time.Minute,
+			"rate_limit_reset": limit / time.Nanosecond / time.Minute, // remaining time to expire in miniutes
 		})
 	}
 
@@ -78,6 +80,8 @@ func ShortenURL(c *fiber.Ctx) error {
 	// enforce https, SSL
 	body.URL = helpers.EnforceHTTP(body.URL)
 
+	// id will be used as following example:
+	// example: bit.ly/id
 	var id string
 
 	if body.CustomShort == "" {
@@ -127,12 +131,12 @@ func ShortenURL(c *fiber.Ctx) error {
 	resp.XRateRemaining, _ = strconv.Atoi(val)
 
 	// get the TTL in milisecond
-	// 1s = 10^9 nanosecond
-	// 1min = 60s = 60 * 10^9 nanosecond
-	// for example, 30 mins = 30 * 60 * 10^9 nanosecond
 	ttl, _ := rc2.TTL(database.Ctx, c.IP()).Result()
 
 	// update XRateLimitReset with the current TTL
+	// 1s = 10^9 nanosecond
+	// 1min = 60s = 60 * 10^9 nanosecond
+	// for example, 30 mins = 30 * 60 * 10^9 nanosecond
 	resp.XRateLimitReset = ttl / time.Nanosecond / time.Minute
 
 	// set CustomShort

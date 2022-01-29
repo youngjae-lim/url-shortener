@@ -6,6 +6,7 @@ import (
 	"github.com/youngjae-lim/url-shortener/database"
 )
 
+// ResolveURL takes the shortened url as a query parameter and redirect a user to the actual webpage
 func ResolveURL(c *fiber.Ctx) error {
 	url := c.Params("url")
 
